@@ -9,7 +9,7 @@ import SavedBooks from './pages/SavedBooks'
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: (<App />),
     errorElement: <h1 className='display-2'>Wrong page!</h1>,
     children: [
       {

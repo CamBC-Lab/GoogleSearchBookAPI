@@ -1,16 +1,19 @@
 // use this to decode a token and get the user's information out of it
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode, type JwtPayload } from 'jwt-decode';
 
-interface UserToken {
-  name: string;
-  exp: number;
+interface ExtendedJWT extends JwtPayload {
+  data: {
+    username: string;
+    email: string;
+    _id: string;
+  }
 }
 
 // create a new class to instantiate for a user
 class AuthService {
   // get user data
   getProfile() {
-    return jwtDecode(this.getToken() || '');
+    return jwtDecode<ExtendedJWT>(this.getToken() || '');
   }
 
   // check if user's logged in
@@ -23,8 +26,8 @@ class AuthService {
   // check if token is expired
   isTokenExpired(token: string) {
     try {
-      const decoded = jwtDecode<UserToken>(token);
-      if (decoded.exp < Date.now() / 1000) {
+      const decoded = jwtDecode<JwtPayload>(token);
+      if (decoded?.exp && decoded?.exp < Date.now() / 1000) {
         return true;
       } 
       
@@ -36,20 +39,20 @@ class AuthService {
 
   getToken() {
     // Retrieves the user token from localStorage
-    return localStorage.getItem('id_token');
+    const loggedAccount = localStorage.getItem('id_token');
+    return loggedAccount;
   }
 
   login(idToken: string) {
     // Saves user token to localStorage
     localStorage.setItem('id_token', idToken);
-    window.location.assign('/');
+   
   }
 
   logout() {
     // Clear user token and profile data from localStorage
     localStorage.removeItem('id_token');
-    // this will reload the page and reset the state of the application
-    window.location.assign('/');
+    window.location.reload();
   }
 }
 

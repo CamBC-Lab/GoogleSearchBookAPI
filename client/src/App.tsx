@@ -1,53 +1,39 @@
-import "./App.css";
-import { Outlet } from "react-router-dom";
-import {
-  ApolloProvider,
-  ApolloClient,
-  InMemoryCache,
-  createHttpLink,
-} from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
-import Navbar from "./components/Navbar";
+import { Outlet } from 'react-router-dom';
+import './App.css';
+import { ApolloClient, InMemoryCache, ApolloProvider,createHttpLink } from '@apollo/client';
+import  AppNavbar  from './components/Navbar';
+import { setContext } from '@apollo/client/link/context';
 
-const httpLink = createHttpLink({ 
+// Construct our main GraphQL API endpoint
+const httpLink = createHttpLink({
   uri: 'http://localhost:3001/graphql',
-  credentials: 'include' // Add this if you're using cookies
 });
 
+// Construct request middleware that will attach the JWT token to every request as an `authorization` header
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("id_token");
+  // get the authentication token from local storage if it exists
+  const token = localStorage.getItem('id_token');
+  // return the headers to the context so httpLink can read them
   return {
     headers: {
       ...headers,
-      Authorization: token ? `Bearer ${token}` : "",
+      authorization: token ? `Bearer ${token}` : '',
     },
   };
-});
-
+})
 const client = new ApolloClient({
   link: authLink.concat(httpLink),
   cache: new InMemoryCache(),
-  defaultOptions: {
-    watchQuery: {
-      fetchPolicy: 'network-only',
-      errorPolicy: 'all',
-    },
-    query: {
-      fetchPolicy: 'network-only',
-      errorPolicy: 'all',
-    },
-  },
+  
 });
 
 function App() {
   return (
     <ApolloProvider client={client}>
-      <>
-        <Navbar />
-        <Outlet />
-      </>
+      <AppNavbar/>
+     <Outlet />
     </ApolloProvider>
   );
 }
 
-export default App;
+export default App

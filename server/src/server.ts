@@ -3,6 +3,7 @@ import db from './config/connection.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ApolloServer } from '@apollo/server';
+import cors from 'cors';
 
 import { expressMiddleware } from '@apollo/server/express4';
 import { typeDefs, resolvers } from './schemas/index.js';
@@ -13,17 +14,19 @@ const __dirname = path.dirname(__filename);
 const server = new ApolloServer({
   typeDefs, 
   resolvers,
- // context: authenticateToken, 
+
 });
-// Create a new instance of an Apollo server with the GraphQL schema
+
 const startApolloServer = async () => {
 
-  await server.start(); // Start Apollo Server
-  await db; // Connect to MongoDB
+  await server.start();
+  await db; // MongodDB connection
 
   const PORT = 3001;
   const app = express();
 
+  app.use(cors());
+  
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 

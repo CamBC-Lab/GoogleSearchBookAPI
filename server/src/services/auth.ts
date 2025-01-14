@@ -1,43 +1,74 @@
-import jwt from "jsonwebtoken";
-import { GraphQLError } from "graphql";
-import dotenv from "dotenv";
+import type { Request} from 'express';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import { GraphQLError } from 'graphql';
+import dotenv from 'dotenv';
 dotenv.config();
 
-export const authenticateToken = ({ req }: any) => {
-  // we allow the token to be sent either through the body, the headers authorization or through the query
-  let token = req.body.token || req.query.token || req.headers.authorization;
 
-  // if the token is in the authorization header then extract it
-
-  if (req.headers.authorization) {
-    token = token.split(" ").pop().trim();
+export const authenticateToken = async ({ req }: {req: Request}) => {
+  // Get the token from the request
+  //const token = req.headers.authorization?.split(' ')[1] || '';
+  let token = req.body?.token || req.query.token || req.headers.authorization
+  console.log(token);
+  if( req.headers.authorization){
+    token = token.split(' ').pop().trim();
   }
-  // if the token isnt valid then return the req
+  
+  // If no token is provided, return an object with null user
   if (!token) {
-    return req;
+    console.log('No token provided');
+    return { user: null };
   }
 
-  // verify the token
-  const secretKey = process.env.JWT_SECRET_KEY || " ";
   try {
-    const { data }: any = jwt.verify(token, secretKey, { maxAge: "2h" });
-    req.user = data;
-  } catch (err) {
-    console.log("Invalid Token");
+    // Verify the token
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET_KEY || 'Test', { maxAge: '2h' });
+    
+    // Ensure decoded data exists
+    if (!decoded?.data) {
+      console.log('Invalid token structure');
+      return { user: null };
+    }
+
+    // Find the user
+    const user = await User.findById(decoded.data._id);
+    req.user = decoded.data;
+    if (!user) {
+      console.log('No user found for the token');
+      return { user: null };
+    }
+
+    // Return user data
+    return req;
+
+  } catch (error) {
+    console.error('Authentication error:', error);
+    
+    // Handle specific JWT errors
+    if (error instanceof jwt.TokenExpiredError) {
+      console.log('Token expired');
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      console.log('Invalid token');
+    }
+
+    return { user: null };
   }
-  return req;
 };
-
 export const signToken = (username: string, email: string, _id: unknown) => {
+  // Create a payload with the user information
   const payload = { username, email, _id };
-  const secretKey = process.env.JWT_SECRET_KEY || "";
+  const secretKey: any = process.env.JWT_SECRET_KEY || 'Test'; // Get the secret key from environment variables
 
-  return jwt.sign({ data: payload }, secretKey, { expiresIn: "1h" });
+  // Sign the token with the payload and secret key, and set it to expire in 2 hours
+  return jwt.sign({ data: payload }, secretKey, { expiresIn: '2h' });
 };
 
 export class AuthenticationError extends GraphQLError {
   constructor(message: string) {
-    super(message, undefined, undefined, undefined, ["UNAUTHENTICATED"]);
-    Object.defineProperty(this, "name", { value: "AuthenticationError" });
+    super(message, {
+      extensions: { code: 'UNAUTHENTICATED' }
+    });
+    Object.defineProperty(this, 'name', { value: 'AuthenticationError' });
   }
-}
+};

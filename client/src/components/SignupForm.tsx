@@ -9,7 +9,6 @@ import type { User } from '../models/User';
 
 
 const SignupForm = ({ handleModalClose } : { handleModalClose: () => void }) => {
-  // set initial form state
   const [userFormData, setUserFormData] = useState<User>({ 
     username: '', 
     email: '', 
@@ -17,9 +16,8 @@ const SignupForm = ({ handleModalClose } : { handleModalClose: () => void }) => 
     savedBooks: [],
     bookCount: 0,
   });
-  // set state for form validation
+
   const [validated] = useState(false);
-  // set state for alert
   const [showAlert, setShowAlert] = useState(false);
 
   const [ addUser ] = useMutation(ADD_USER);
@@ -51,9 +49,7 @@ const SignupForm = ({ handleModalClose } : { handleModalClose: () => void }) => 
  
   return (
     <>
-      {/* This is needed for the validation functionality above */}
       <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
-        {/* show alert if server response is bad */}
         <Alert dismissible onClose={() => setShowAlert(false)} show={showAlert} variant='danger'>
           Something went wrong with your signup!
         </Alert>

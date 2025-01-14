@@ -5,4 +5,5 @@ export interface User {
   email: string | null;
   password: string | null;
   savedBooks: Book[];
+  bookCount: number;
 }
